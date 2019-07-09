@@ -2,10 +2,10 @@ using System;
 
 namespace JustinCredible.NetworkScanner
 {
-    public class DhcpReservationEntry
+    public class ArpScanEntry
     {
-        public String HostName { get; set; }
         public String IpAddress { get; set; }
         public String MacAddress { get; set; }
+        public String Manufacturer { get; set; }
     }
 }

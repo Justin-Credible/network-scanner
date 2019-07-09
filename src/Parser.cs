@@ -9,8 +9,11 @@ namespace JustinCredible.NetworkScanner
     {
         private static Regex _whiteSpaceRegEx = new Regex("\\s+");
 
-        // dhcp-host=98:DE:D0:1F:FA:57,192.168.1.20,hostname
-        private static Regex _dhcpReservationRegEx = new Regex("dhcp-host=([0-9A-F:]+),([0-9.]+),(.*)");
+        // dhcp-host=aa:bb:cc:dd:ee:ff,192.168.1.20,hostname
+        private static Regex _dhcpReservationRegEx = new Regex("dhcp-host=([0-9A-Fa-f:]+),([0-9.]+),(.*)");
+
+        // 10.1.10.10	aa:bb:cc:dd:ee:ff	Ubiquiti Networks Inc.
+        private static Regex _arpScanOutputRegEx = new Regex("([0-9.]+)\t([0-9A-Fa-f:]+)\t(.*)");
 
         public static List<HostsEntry> ParseHostsFile(String hostsFilePath)
         {
@@ -98,6 +101,40 @@ namespace JustinCredible.NetworkScanner
                     HostName = matches.Groups[3].Value,
                     IpAddress = matches.Groups[2].Value,
                     MacAddress = matches.Groups[1].Value,
+                };
+
+                entries.Add(entry);
+            }
+
+            return entries;
+        }
+
+        public static List<ArpScanEntry> ParseAprScanOutput(String arpScanOutput)
+        {
+            var entries = new List<ArpScanEntry>();
+
+            if (String.IsNullOrEmpty(arpScanOutput))
+                return entries;
+
+            var lines = arpScanOutput.Split(Environment.NewLine);
+
+            foreach (var rawLine in lines)
+            {
+                if (String.IsNullOrEmpty(rawLine))
+                    continue;
+
+                var line = rawLine.Trim();
+
+                var matches = _arpScanOutputRegEx.Match(line);
+
+                if (matches.Groups.Count != 4)
+                    continue;
+
+                var entry = new ArpScanEntry()
+                {
+                    IpAddress = matches.Groups[1].Value,
+                    MacAddress = matches.Groups[2].Value,
+                    Manufacturer = matches.Groups[3].Value,
                 };
 
                 entries.Add(entry);

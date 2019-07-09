@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using Microsoft.Extensions.CommandLineUtils;
 
 namespace JustinCredible.NetworkScanner
 {
@@ -27,16 +26,36 @@ namespace JustinCredible.NetworkScanner
             if (dhcpReservationsPath != null && !File.Exists(dhcpReservationsPath))
                 throw new ArgumentException($"Could not locate dnsmasq DHCP reservations file with given path: {dhcpReservationsPath}");
 
+            if (verbose)
+                Console.WriteLine($"Parsing hosts file: {hostsPath}");
+
             var hostEntries = Parser.ParseHostsFile(hostsPath);
+
+            if (verbose)
+                Console.WriteLine($"Parsed {hostEntries.Count} host entries.");
+
+            if (verbose)
+                Console.WriteLine($"Parsing dnsmasq DHCP reservations file: {dhcpReservationsPath}");
 
             List<DhcpReservationEntry> dhcpReservationEntries = null;
 
             if (!String.IsNullOrEmpty(dhcpReservationsPath))
+            {
                 dhcpReservationEntries = Parser.ParseDhcpReservationsFile(dhcpReservationsPath);
 
-            // TODO: Execute `sudo arp-scan --interface={interfaceName} --localnet` (https://www.blackmoreops.com/2015/12/31/use-arp-scan-to-find-hidden-devices-in-your-network/)
-            // TODO: Parse output of arp-scan
-            // TODO: For each host found via arp-scan
+                if (verbose)
+                    Console.WriteLine($"Parsed {dhcpReservationEntries.Count} DHCP reservation entries.");
+            }
+
+            if (verbose)
+                Console.WriteLine($"Executing arp-scan on interface {interfaceName}");
+
+            var arpScanOutput = ArpScan.Execute(interfaceName, verbose);
+            var arpScanEntries = Parser.ParseAprScanOutput(arpScanOutput);
+
+            if (verbose)
+                Console.WriteLine($"Received {arpScanEntries.Count} arp-scan entries.");
+
             // TODO: See if each IP address exists in known hosts or MAC address in known DHCP reservations
             // TODO: If not, add to list of unknown hosts.
             // TODO: Write stdout line with each unknown host.

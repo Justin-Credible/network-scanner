@@ -23,6 +23,7 @@ namespace JustinCredible.NetworkScanner
 
             _app.Command("scan", Scan);
             _app.Command("list-known", ListKnown);
+            _app.Command("list-active", ListActive);
 
             try
             {
@@ -95,6 +96,7 @@ namespace JustinCredible.NetworkScanner
                 return 0;
             });
         }
+
         private static void ListKnown(CommandLineApplication command)
         {
             command.Description = "Lists the known hosts by parsing the hosts file as well as a dnsmasq DHCP reservations file (optional).";
@@ -137,6 +139,50 @@ namespace JustinCredible.NetworkScanner
                         foreach (var dhcpReservationEntry in dhcpReservationEntries)
                             Console.WriteLine(" {0}\t{1}\t{2}", dhcpReservationEntry.IpAddress, dhcpReservationEntry.MacAddress, dhcpReservationEntry.HostName);
                     }
+                }
+                catch (Exception exception)
+                {
+                    PrintUnhandledException(exception, verbose);
+                    return 1;
+                }
+
+                if (verbose)
+                    Console.WriteLine("Operation completed.");
+
+                return 0;
+            });
+        }
+
+        private static void ListActive(CommandLineApplication command)
+        {
+            command.Description = "Lists the active hosts on the network by using arp-scan on the given interface.";
+            command.HelpOption("-?|-h|--help");
+
+            var interfaceNameArg = command.Argument("[interface]", "The name of the interface to use for scanning (e.g. eth0, ens192)");
+            var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
+
+            command.OnExecute(() =>
+            {
+                var interfaceName = interfaceNameArg.Value;
+
+                if (String.IsNullOrEmpty(interfaceName))
+                {
+                    PrintMissingArgumentError(interfaceNameArg.Name, _app, command.Name);
+                    return 1;
+                }
+
+                var verbose = verboseOption.HasValue();
+
+                try
+                {
+                    var output = ArpScan.Execute(interfaceName, verbose);
+                    var aprScanEntries = Parser.ParseAprScanOutput(output);
+
+                    Console.WriteLine("Hosts found via arp-scan:");
+                    Console.WriteLine(" IP Address\tMAC Address\tManufacturer");
+
+                    foreach (var aprScanEntry in aprScanEntries)
+                        Console.WriteLine(" {0}\t{1}\t{2}", aprScanEntry.IpAddress, aprScanEntry.MacAddress, aprScanEntry.Manufacturer);
                 }
                 catch (Exception exception)
                 {
