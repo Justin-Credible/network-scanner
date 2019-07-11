@@ -6,7 +6,7 @@ namespace JustinCredible.NetworkScanner
 {
     public class ArpScan
     {
-        public static String Execute(String interfaceName, bool verbose = false)
+        public static string Execute(string interfaceName, bool verbose = false)
         {
             var arpScanArguments = $"--interface={interfaceName} --localnet";
 

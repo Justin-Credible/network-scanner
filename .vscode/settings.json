@@ -6,5 +6,6 @@
     "search.exclude": {
         "**/bin": true,
         "**/obj": true
-    }
+    },
+    "csharp.referencesCodeLens.enabled": false
 }

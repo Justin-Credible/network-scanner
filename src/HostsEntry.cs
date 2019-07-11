@@ -1,10 +1,9 @@
-using System;
 
 namespace JustinCredible.NetworkScanner
 {
     public class HostsEntry
     {
-        public String HostName { get; set; }
-        public String IpAddress { get; set; }
+        public string HostName { get; set; }
+        public string IpAddress { get; set; }
     }
 }

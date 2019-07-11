@@ -15,13 +15,13 @@ namespace JustinCredible.NetworkScanner
         // 10.1.10.10	aa:bb:cc:dd:ee:ff	Ubiquiti Networks Inc.
         private static Regex _arpScanOutputRegEx = new Regex("([0-9.]+)\t([0-9A-Fa-f:]+)\t(.*)");
 
-        public static List<HostsEntry> ParseHostsFile(String hostsFilePath)
+        public static List<HostsEntry> ParseHostsFile(string hostsFilePath)
         {
-            String hostsFileContent = File.ReadAllText(hostsFilePath);
+            string hostsFileContent = File.ReadAllText(hostsFilePath);
             return ParseHostsFileContent(hostsFileContent);
         }
 
-        public static List<HostsEntry> ParseHostsFileContent(String hostsFileContent)
+        public static List<HostsEntry> ParseHostsFileContent(string hostsFileContent)
         {
             var entries = new List<HostsEntry>();
 
@@ -65,13 +65,13 @@ namespace JustinCredible.NetworkScanner
 
             return entries;
         }
-        public static List<DhcpReservationEntry> ParseDhcpReservationsFile(String dhcpReservationsFilePath)
+        public static List<DhcpReservationEntry> ParseDhcpReservationsFile(string dhcpReservationsFilePath)
         {
-            String dhcpReservationsFileContent = File.ReadAllText(dhcpReservationsFilePath);
+            string dhcpReservationsFileContent = File.ReadAllText(dhcpReservationsFilePath);
             return ParseDhcpReservationsFileContent(dhcpReservationsFileContent);
         }
 
-        public static List<DhcpReservationEntry> ParseDhcpReservationsFileContent(String dhcpReservationsFileContent)
+        public static List<DhcpReservationEntry> ParseDhcpReservationsFileContent(string dhcpReservationsFileContent)
         {
             var entries = new List<DhcpReservationEntry>();
 
@@ -109,7 +109,7 @@ namespace JustinCredible.NetworkScanner
             return entries;
         }
 
-        public static List<ArpScanEntry> ParseAprScanOutput(String arpScanOutput)
+        public static List<ArpScanEntry> ParseAprScanOutput(string arpScanOutput)
         {
             var entries = new List<ArpScanEntry>();
 

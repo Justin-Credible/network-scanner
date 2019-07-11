@@ -53,7 +53,7 @@ namespace JustinCredible.NetworkScanner
 
             var hostsPathOption = command.Option("-h|--hosts", "Path to the hosts file to check against for known hosts.", CommandOptionType.SingleValue);
             var dnsmasqDhcpPathOption = command.Option("-dd|--dnsmasq-dhcp", "Path to a dnsmasq file containing DHCP reservations to check against for known hosts.", CommandOptionType.SingleValue);
-            var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication for each unidentified host found.", CommandOptionType.NoValue);
+            var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication via pushover.net for each unidentified host found using the given API key.", CommandOptionType.SingleValue);
             var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
 
             command.OnExecute(() =>
@@ -69,20 +69,22 @@ namespace JustinCredible.NetworkScanner
                 var hostsPath = hostsPathOption.HasValue() ? hostsPathOption.Value() : "/etc/hosts";
                 var dnsmasqDhcpPath = dnsmasqDhcpPathOption.Value();
                 var sendPushNotifications = pushNotificationOption.HasValue();
+                var pushNotificationsApiKey = pushNotificationOption.Value();
                 var verbose = verboseOption.HasValue();
 
                 if (verbose)
                 {
                     Console.WriteLine("Hosts Path: " + hostsPath);
                     Console.WriteLine("dnsmasq DHCP Reservations Path: " + (String.IsNullOrEmpty(dnsmasqDhcpPath) ? "N/A" : dnsmasqDhcpPath));
-                    Console.WriteLine("Send Push Notifications: " + pushNotificationOption);
+                    Console.WriteLine("Send Push Notifications: " + sendPushNotifications);
+                    Console.WriteLine("Push Notifications API key: " + Utilities.maskString(pushNotificationsApiKey));
 
                     Console.WriteLine("Starting network scan...");
                 }
 
                 try
                 {
-                    Scanner.Scan(interfaceName, hostsPath, dnsmasqDhcpPath, sendPushNotifications, verbose);
+                    Scanner.DetectUnknownHosts(interfaceName, hostsPath, dnsmasqDhcpPath, sendPushNotifications, pushNotificationsApiKey, verbose);
                 }
                 catch (Exception exception)
                 {
