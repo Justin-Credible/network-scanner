@@ -1,11 +1,27 @@
 ﻿using System;
 using Microsoft.Extensions.CommandLineUtils;
+using Microsoft.Extensions.Configuration;
 
 namespace JustinCredible.NetworkScanner
 {
     class Program
     {
         private static CommandLineApplication _app;
+
+        private static IConfiguration _config;
+
+        private static IConfiguration Config
+        {
+            get
+            {
+                if (_config == null)
+                    _config = new ConfigurationBuilder()
+                        .AddJsonFile("appsettings.json", true, true)
+                        .Build();
+
+                return _config;
+            }
+        }
 
         private static int Main(string[] args)
         {
@@ -53,8 +69,6 @@ namespace JustinCredible.NetworkScanner
             var hostsPathOption = command.Option("-h|--hosts", "Path to the hosts file to check against for known hosts.", CommandOptionType.SingleValue);
             var dnsmasqDhcpPathOption = command.Option("-dd|--dnsmasq-dhcp", "Path to a dnsmasq file containing DHCP reservations to check against for known hosts.", CommandOptionType.SingleValue);
             var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication via pushover.net for each unidentified host found.", CommandOptionType.NoValue);
-            var pushoverTokenOption = command.Option("-pot|--pushover-token", "Pushover.net API token for sending push notifications.", CommandOptionType.SingleValue);
-            var pushoverUserOption = command.Option("-pou|--pushover-user", "Pushover.net API user for sending push notifications.", CommandOptionType.SingleValue);
             var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
 
             command.OnExecute(() =>
@@ -70,9 +84,11 @@ namespace JustinCredible.NetworkScanner
                 var hostsPath = hostsPathOption.HasValue() ? hostsPathOption.Value() : "/etc/hosts";
                 var dnsmasqDhcpPath = dnsmasqDhcpPathOption.Value();
                 var sendPushNotifications = pushNotificationOption.HasValue();
-                string pushoverToken = pushoverTokenOption.Value();
-                string pushoverUser = pushoverUserOption.Value();
+                string pushoverToken = Config["pushover_token"];
+                string pushoverUser = Config["pushover_user"];
+                string pushoverApiUrl = Config["pushover_api_url"];
                 var verbose = verboseOption.HasValue();
+
 
                 if (verbose)
                 {
@@ -81,6 +97,7 @@ namespace JustinCredible.NetworkScanner
                     Console.WriteLine("Send Push Notifications: " + sendPushNotifications);
                     Console.WriteLine("Pushover.net API token: " + Utilities.maskString(pushoverToken));
                     Console.WriteLine("Pushover.net API user: " + pushoverUser);
+                    Console.WriteLine("Pushover.net API URL: " + pushoverApiUrl);
 
                     Console.WriteLine("Starting network scan...");
                 }
