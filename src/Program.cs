@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using Microsoft.Extensions.CommandLineUtils;
 
 namespace JustinCredible.NetworkScanner
@@ -53,7 +52,9 @@ namespace JustinCredible.NetworkScanner
 
             var hostsPathOption = command.Option("-h|--hosts", "Path to the hosts file to check against for known hosts.", CommandOptionType.SingleValue);
             var dnsmasqDhcpPathOption = command.Option("-dd|--dnsmasq-dhcp", "Path to a dnsmasq file containing DHCP reservations to check against for known hosts.", CommandOptionType.SingleValue);
-            var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication via pushover.net for each unidentified host found using the given API key.", CommandOptionType.SingleValue);
+            var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication via pushover.net for each unidentified host found.", CommandOptionType.NoValue);
+            var pushoverTokenOption = command.Option("-pot|--pushover-token", "Pushover.net API token for sending push notifications.", CommandOptionType.SingleValue);
+            var pushoverUserOption = command.Option("-pou|--pushover-user", "Pushover.net API user for sending push notifications.", CommandOptionType.SingleValue);
             var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
 
             command.OnExecute(() =>
@@ -69,7 +70,8 @@ namespace JustinCredible.NetworkScanner
                 var hostsPath = hostsPathOption.HasValue() ? hostsPathOption.Value() : "/etc/hosts";
                 var dnsmasqDhcpPath = dnsmasqDhcpPathOption.Value();
                 var sendPushNotifications = pushNotificationOption.HasValue();
-                var pushNotificationsApiKey = pushNotificationOption.Value();
+                string pushoverToken = pushoverTokenOption.Value();
+                string pushoverUser = pushoverUserOption.Value();
                 var verbose = verboseOption.HasValue();
 
                 if (verbose)
@@ -77,14 +79,20 @@ namespace JustinCredible.NetworkScanner
                     Console.WriteLine("Hosts Path: " + hostsPath);
                     Console.WriteLine("dnsmasq DHCP Reservations Path: " + (String.IsNullOrEmpty(dnsmasqDhcpPath) ? "N/A" : dnsmasqDhcpPath));
                     Console.WriteLine("Send Push Notifications: " + sendPushNotifications);
-                    Console.WriteLine("Push Notifications API key: " + Utilities.maskString(pushNotificationsApiKey));
+                    Console.WriteLine("Pushover.net API token: " + Utilities.maskString(pushoverToken));
+                    Console.WriteLine("Pushover.net API user: " + pushoverUser);
 
                     Console.WriteLine("Starting network scan...");
                 }
 
                 try
                 {
-                    Scanner.DetectUnknownHosts(interfaceName, hostsPath, dnsmasqDhcpPath, sendPushNotifications, pushNotificationsApiKey, verbose);
+                    var results = Scanner.DetectUnknownHosts(interfaceName, hostsPath, dnsmasqDhcpPath, verbose);
+
+                    Reporter.ReportToConsole(results);
+
+                    if (sendPushNotifications)
+                        Reporter.ReportToPushover(results, pushoverToken, pushoverUser, verbose);
                 }
                 catch (Exception exception)
                 {

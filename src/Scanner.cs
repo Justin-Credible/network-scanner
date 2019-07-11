@@ -6,7 +6,7 @@ namespace JustinCredible.NetworkScanner
 {
     public class Scanner
     {
-        public static void DetectUnknownHosts(
+        public static DetectUnknownHostsResults DetectUnknownHosts(
             string interfaceName,
             string hostsPath = "/etc/hosts",
             string dhcpReservationsPath = null,
@@ -70,7 +70,7 @@ namespace JustinCredible.NetworkScanner
             // See if each IP address exists in known hosts or MAC address in known DHCP reservations.
 
             var unknownHosts = new List<ArpScanEntry>();
-            var mismatchedIpAddressDhcpHosts = new List<KeyValuePair<ArpScanEntry, DhcpReservationEntry>>();
+            List<KeyValuePair<ArpScanEntry, DhcpReservationEntry>> mismatchedIpAddressDhcpHosts = null;
 
             foreach (var arpEntry in arpScanEntries)
             {
@@ -82,6 +82,8 @@ namespace JustinCredible.NetworkScanner
 
                 if (dhcpReservationEntries != null)
                 {
+                    mismatchedIpAddressDhcpHosts = new List<KeyValuePair<ArpScanEntry, DhcpReservationEntry>>();
+
                     var matchingDhcpEntry = dhcpReservationEntries.Find(x => x.MacAddress == arpEntry.MacAddress);
 
                     // Found a DHCP reservation match by MAC address, make sure the IP address matches.
@@ -100,64 +102,11 @@ namespace JustinCredible.NetworkScanner
                 unknownHosts.Add(arpEntry);
             }
 
-            // Write out the unknown hosts to the console.
-
-            if (unknownHosts.Count == 0)
+            return new DetectUnknownHostsResults()
             {
-                Console.WriteLine("No unknown hosts found.", unknownHosts.Count);
-            }
-            else
-            {
-                Console.WriteLine("Found {0} unknown hosts!", unknownHosts.Count);
-                Console.WriteLine();
-                Console.WriteLine("IP Address\tMAC Address\tManufacturer");
-
-                foreach (var unknownHost in unknownHosts)
-
-                    Console.WriteLine("{0}\t{1}\t{2}",
-                        unknownHost.IpAddress,
-                        unknownHost.MacAddress,
-                        unknownHost.Manufacturer
-                    );
-            }
-
-            // Write out the DHCP reservation IP address mismatches to the console.
-
-            if (!String.IsNullOrEmpty(dhcpReservationsPath))
-            {
-                if (mismatchedIpAddressDhcpHosts.Count == 0)
-                {
-                    Console.WriteLine("No DHCP reservation mismatches found.", unknownHosts.Count);
-                }
-                else
-                {
-                    Console.WriteLine("Found {0} DHCP reservation mismatches!", unknownHosts.Count);
-                    Console.WriteLine();
-                    Console.WriteLine("IP Address\tMAC Address\tManufacturer\tExpected IP Address");
-
-                    foreach (var mismatch in mismatchedIpAddressDhcpHosts)
-                    {
-                        var arpEntry = mismatch.Key;
-                        var dhcpReservationEntry = mismatch.Value;
-
-                        Console.WriteLine("{0}\t{1}\t{2}\t{3}",
-                            arpEntry.IpAddress,
-                            arpEntry.MacAddress,
-                            arpEntry.Manufacturer,
-                            dhcpReservationEntry.IpAddress
-                        );
-                    }
-                }
-            }
-
-            // Report unknown hosts and/or DHCP reservation mismatches via push notifications.
-
-            if (sendPushNotifications && (unknownHosts.Count > 0 || mismatchedIpAddressDhcpHosts.Count > 0))
-            {
-                Console.WriteLine("Reporting unknown hosts and/or mismatches via push notification...");
-
-                // TODO
-            }
+                UnknownHosts = unknownHosts,
+                MismatchedIpAddressDhcpHosts = mismatchedIpAddressDhcpHosts,
+            };
         }
     }
 }
