@@ -1,6 +1,6 @@
 using System;
 using System.Diagnostics;
-using System.Text;
+using System.IO;
 
 namespace JustinCredible.NetworkScanner
 {
@@ -19,20 +19,27 @@ namespace JustinCredible.NetworkScanner
             var process = new Process();
             process.StartInfo.FileName = "arp-scan";
             process.StartInfo.Arguments = arpScanArguments;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.CreateNoWindow = true;
 
-            var output = new StringBuilder();
-
-            process.StartInfo.RedirectStandardOutput = true;
-            process.OutputDataReceived += (sender, data) => output.Append(data.Data);
-
-            process.StartInfo.RedirectStandardError = true;
-            process.ErrorDataReceived += (sender, data) => output.Append(data.Data);
-
             process.Start();
 
-            return output.ToString();
+            // Synchronously read the standard output of the spawned process. 
+            StreamReader stdOutReader = process.StandardOutput;
+            string stdOut = stdOutReader.ReadToEnd();
+
+            // Synchronously read the standard output of the spawned process. 
+            StreamReader stdErrReader = process.StandardError;
+            string stdErr = stdErrReader.ReadToEnd();
+
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+                throw new Exception("A non-zero exit code was returned from arp-scan (try sudo)", new Exception("arp-scan stderr: " + stdErr));
+
+            return stdOut;
         }
     }
 }

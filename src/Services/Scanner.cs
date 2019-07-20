@@ -10,8 +10,6 @@ namespace JustinCredible.NetworkScanner
             string interfaceName,
             string hostsPath = "/etc/hosts",
             string dhcpReservationsPath = null,
-            bool sendPushNotifications = false,
-            string pushNotificationsApiKey = null,
             bool verbose = false)
         {
             // Sanity checking: ensure arguments are set as expected.
@@ -27,9 +25,6 @@ namespace JustinCredible.NetworkScanner
 
             if (dhcpReservationsPath != null && !File.Exists(dhcpReservationsPath))
                 throw new ArgumentException($"Could not locate dnsmasq DHCP reservations file with given path: {dhcpReservationsPath}");
-
-            if (sendPushNotifications && String.IsNullOrEmpty(pushNotificationsApiKey))
-                throw new ArgumentException("A push notification API key must be provided when sending push notifications.");
 
             // Attempt to parse the hosts file.
 

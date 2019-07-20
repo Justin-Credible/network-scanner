@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Net;
 using System.Text;
 
@@ -7,9 +6,7 @@ namespace JustinCredible.NetworkScanner
 {
     public class Pushover
     {
-        private const string PUSHOVER_API_URL = "https://api.pushover.net/1/messages.json";
-
-        public static void Send(string token, string user, string message, bool verbose = false)
+        public static void Send(string token, string user, string pushoverApiUrl, string message, bool verbose = false)
         {
             if (String.IsNullOrEmpty(token))
                 throw new ArgumentException("To send a push notification via Pushover.net, an API token is required.");
@@ -20,7 +17,7 @@ namespace JustinCredible.NetworkScanner
             if (String.IsNullOrEmpty(message))
                 throw new ArgumentException("To send a push notification via Pushover.net, an message is required.");
 
-            var request = HttpWebRequest.Create(PUSHOVER_API_URL) as HttpWebRequest;
+            var request = HttpWebRequest.Create(pushoverApiUrl) as HttpWebRequest;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
 

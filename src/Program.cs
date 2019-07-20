@@ -109,7 +109,7 @@ namespace JustinCredible.NetworkScanner
                     Reporter.ReportToConsole(results);
 
                     if (sendPushNotifications)
-                        Reporter.ReportToPushover(results, pushoverToken, pushoverUser, verbose);
+                        Reporter.ReportToPushover(results, pushoverToken, pushoverUser, pushoverApiUrl, verbose);
                 }
                 catch (Exception exception)
                 {
@@ -203,6 +203,10 @@ namespace JustinCredible.NetworkScanner
                 try
                 {
                     var output = ArpScan.Execute(interfaceName, verbose);
+
+                    if (verbose)
+                        Console.WriteLine("arp-scan output:{0}{1}", Environment.NewLine, output);
+
                     var aprScanEntries = Parser.ParseAprScanOutput(output);
 
                     Console.WriteLine("Hosts found via arp-scan:");
