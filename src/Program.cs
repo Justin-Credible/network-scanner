@@ -25,11 +25,22 @@ namespace JustinCredible.NetworkScanner
 
         private static int Main(string[] args)
         {
-            _app = new CommandLineApplication();
+            var version = Utilities.AppVersion;
 
+            _app = new CommandLineApplication();
             _app.Name = "network-scanner";
             _app.HelpOption("-?|-h|--help");
 
+            _app.VersionOption("-v|--version",
+
+                // Used for HelpOption() header
+                $"{_app.Name} {version}",
+
+                // Used for output of --version option.
+                version
+            );
+
+            // When launched without any commands or options.
             _app.OnExecute(() =>
             {
                 _app.ShowHelp();
@@ -95,7 +106,7 @@ namespace JustinCredible.NetworkScanner
                     Console.WriteLine("Hosts Path: " + hostsPath);
                     Console.WriteLine("dnsmasq DHCP Reservations Path: " + (String.IsNullOrEmpty(dnsmasqDhcpPath) ? "N/A" : dnsmasqDhcpPath));
                     Console.WriteLine("Send Push Notifications: " + sendPushNotifications);
-                    Console.WriteLine("Pushover.net API token: " + Utilities.maskString(pushoverToken));
+                    Console.WriteLine("Pushover.net API token: " + Utilities.MaskString(pushoverToken));
                     Console.WriteLine("Pushover.net API user: " + pushoverUser);
                     Console.WriteLine("Pushover.net API URL: " + pushoverApiUrl);
 
