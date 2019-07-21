@@ -100,7 +100,7 @@ namespace JustinCredible.NetworkScanner
                 {
                     HostName = matches.Groups[3].Value,
                     IpAddress = matches.Groups[2].Value,
-                    MacAddress = matches.Groups[1].Value,
+                    MacAddress = matches.Groups[1].Value.ToLower()
                 };
 
                 entries.Add(entry);
@@ -133,7 +133,7 @@ namespace JustinCredible.NetworkScanner
                 var entry = new ArpScanEntry()
                 {
                     IpAddress = matches.Groups[1].Value,
-                    MacAddress = matches.Groups[2].Value,
+                    MacAddress = matches.Groups[2].Value.ToLower(),
                     Manufacturer = matches.Groups[3].Value,
                 };
 
