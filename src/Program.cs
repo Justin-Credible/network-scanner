@@ -50,6 +50,7 @@ namespace JustinCredible.NetworkScanner
             _app.Command("scan", Scan);
             _app.Command("list-known", ListKnown);
             _app.Command("list-active", ListActive);
+            _app.Command("notified", RecentlyNotified);
 
             try
             {
@@ -79,7 +80,7 @@ namespace JustinCredible.NetworkScanner
 
             var hostsPathOption = command.Option("-h|--hosts", "Path to the hosts file to check against for known hosts.", CommandOptionType.SingleValue);
             var dnsmasqDhcpPathOption = command.Option("-dd|--dnsmasq-dhcp", "Path to a dnsmasq file containing DHCP reservations to check against for known hosts.", CommandOptionType.SingleValue);
-            var pushNotificationOption = command.Option("-pn|--push-notitication", "Send a push notfication via pushover.net for each unidentified host found.", CommandOptionType.NoValue);
+            var pushNotificationOption = command.Option("-pn|--push-notification", "Send a push notfication via pushover.net for each unidentified host found.", CommandOptionType.NoValue);
             var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
 
             command.OnExecute(() =>
@@ -225,6 +226,54 @@ namespace JustinCredible.NetworkScanner
 
                     foreach (var aprScanEntry in aprScanEntries)
                         Console.WriteLine(" {0}\t{1}\t{2}", aprScanEntry.IpAddress, aprScanEntry.MacAddress, aprScanEntry.Manufacturer);
+                }
+                catch (Exception exception)
+                {
+                    PrintUnhandledException(exception, verbose);
+                    return 1;
+                }
+
+                if (verbose)
+                    Console.WriteLine("Operation completed.");
+
+                return 0;
+            });
+        }
+
+        private static void RecentlyNotified(CommandLineApplication command)
+        {
+            command.Description = "Shows the list of hosts that have recently had push notifications sent for.";
+            command.HelpOption("-?|-h|--help");
+
+            var clearOption = command.Option("-c|--clear", "Clear the recently notified logs.", CommandOptionType.NoValue);
+            var showPathOption = command.Option("-p|--show-path", "Print the paths to the recently notified logs.", CommandOptionType.NoValue);
+            var verboseOption = command.Option("-v|--verbose", "Verbose output.", CommandOptionType.NoValue);
+
+            command.OnExecute(() =>
+            {
+                var verbose = verboseOption.HasValue();
+
+                try
+                {
+                    if (clearOption.HasValue() || showPathOption.HasValue())
+                    {
+
+                        if (clearOption.HasValue())
+                        {
+                            Reporter.ClearRecentlyNotifiedLog();
+                            Console.WriteLine("Cleared recently notified logs!");
+                        }
+
+                        if (showPathOption.HasValue())
+                        {
+                            Console.WriteLine("Showing paths for recently notified logs...");
+                            Reporter.PrintRecentlyNotifiedPaths();
+                        }
+                    }
+                    else
+                    {
+                        Reporter.PrintRecentlyNotifiedEntries();
+                    }
                 }
                 catch (Exception exception)
                 {

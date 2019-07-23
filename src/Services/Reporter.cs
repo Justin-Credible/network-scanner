@@ -8,9 +8,26 @@ namespace JustinCredible.NetworkScanner
 {
     public class Reporter
     {
+        private static string RECENTLY_NOTIFIED_PN_UNKNOWN_HOSTS_FILE_NAME = "network-scanner-unknown-hosts-pn-recents.json";
+        private static string RECENTLY_NOTIFIED_PN_RESERVATION_MISMATCH_FILE_NAME = "network-scanner-reservation-mismatch-pn-recents.json";
         private static int MAX_HOSTS_IN_SINGLE_PUSH_NOTIFICATION = 3;
-
         private static int NOTIFICATION_THRESHOLD_HOURS = 24;
+
+        private static string RecentHostsPath
+        {
+            get
+            {
+                return Path.GetTempPath() + RECENTLY_NOTIFIED_PN_UNKNOWN_HOSTS_FILE_NAME;
+            }
+        }
+
+        private static string RecentMismatchesPath
+        {
+            get
+            {
+                return Path.GetTempPath() + RECENTLY_NOTIFIED_PN_RESERVATION_MISMATCH_FILE_NAME;
+            }
+        }
 
         public static void ReportToConsole(DetectUnknownHostsResults results)
         {
@@ -88,14 +105,13 @@ namespace JustinCredible.NetworkScanner
             {
                 // Read the recently notified hosts from disk.
 
-                var recentHostsPath = Path.GetTempPath() + "network-scanner-unknown-hosts-pn-recents.json";
                 string recentHostsJson = null;
 
                 if (verbose)
-                    Console.WriteLine("Using recent hosts JSON from file: " + recentHostsPath);
+                    Console.WriteLine("Using recent hosts JSON from file: " + RecentHostsPath);
 
-                if (File.Exists(recentHostsPath))
-                    recentHostsJson = File.ReadAllText(recentHostsPath);
+                if (File.Exists(RecentHostsPath))
+                    recentHostsJson = File.ReadAllText(RecentHostsPath);
 
                 if (String.IsNullOrEmpty(recentHostsJson))
                     recentHostsJson = "[]";
@@ -120,7 +136,7 @@ namespace JustinCredible.NetworkScanner
 
                 // Update the recently notified JSON back to disk.
                 recentHostsJson = JsonConvert.SerializeObject(recentHostEntries);
-                File.WriteAllText(recentHostsPath, recentHostsJson);
+                File.WriteAllText(RecentHostsPath, recentHostsJson);
 
                 if (unknownHosts.Count > 0)
                 {
@@ -156,16 +172,15 @@ namespace JustinCredible.NetworkScanner
 
             if (mismatchedIpAddressDhcpHosts == null || mismatchedIpAddressDhcpHosts.Count > 0)
             {
-                // Read the recently notified hosts from disk.
+                // Read the recently notified DHCP reservation mismatches from disk.
 
-                var recentMismatchPath = Path.GetTempPath() + "network-scanner-reservation-mismatch-pn-recents.json";
                 string recentMismatchJson = null;
 
                 if (verbose)
-                    Console.WriteLine("Using recent reservations mismatches JSON from file: " + recentMismatchPath);
+                    Console.WriteLine("Using recent reservations mismatches JSON from file: " + RecentMismatchesPath);
 
-                if (File.Exists(recentMismatchPath))
-                    recentMismatchJson = File.ReadAllText(recentMismatchPath);
+                if (File.Exists(RecentMismatchesPath))
+                    recentMismatchJson = File.ReadAllText(RecentMismatchesPath);
 
                 if (String.IsNullOrEmpty(recentMismatchJson))
                     recentMismatchJson = "[]";
@@ -190,7 +205,7 @@ namespace JustinCredible.NetworkScanner
 
                 // Update the recently notified JSON back to disk.
                 recentMismatchJson = JsonConvert.SerializeObject(recentMismatchEntries);
-                File.WriteAllText(recentMismatchPath, recentMismatchJson);
+                File.WriteAllText(RecentMismatchesPath, recentMismatchJson);
 
                 if (mismatchedIpAddressDhcpHosts.Count > 0)
                 {
@@ -226,6 +241,90 @@ namespace JustinCredible.NetworkScanner
 
             if (unknownHosts.Count == 0 && (mismatchedIpAddressDhcpHosts == null || mismatchedIpAddressDhcpHosts.Count == 0))
                 Console.WriteLine("Did not find any entries that need reporting via push notification.");
+        }
+
+        public static void ClearRecentlyNotifiedLog(bool verbose = false)
+        {
+            if (File.Exists(RecentHostsPath))
+            {
+                if (verbose)
+                    Console.WriteLine($"Deleting {RecentHostsPath}");
+
+                File.Delete(RecentHostsPath);
+            }
+
+            if (File.Exists(RecentMismatchesPath))
+            {
+                if (verbose)
+                    Console.WriteLine($"Deleting {RecentMismatchesPath}");
+
+                File.Delete(RecentMismatchesPath);
+            }
+        }
+
+        public static void PrintRecentlyNotifiedPaths()
+        {
+            Console.WriteLine("Recently notified unknown hosts:");
+            Console.WriteLine("\t" + RecentHostsPath);
+            Console.WriteLine("Recently notified mismatched reservations:");
+            Console.WriteLine("\t" + RecentMismatchesPath);
+        }
+
+        public static void PrintRecentlyNotifiedEntries(bool verbose = false)
+        {
+            // Read the recently notified hosts from disk.
+
+            string recentHostsJson = null;
+
+            if (verbose)
+                Console.WriteLine("Using recent hosts JSON from file: " + RecentHostsPath);
+
+            if (File.Exists(RecentHostsPath))
+                recentHostsJson = File.ReadAllText(RecentHostsPath);
+
+            if (String.IsNullOrEmpty(recentHostsJson))
+                recentHostsJson = "[]";
+
+            var recentHostEntries = JsonConvert.DeserializeObject<List<RecentlyNotifiedHostEntry>>(recentHostsJson);
+
+            // Read the recently notified DHCP reservation mismatches from disk.
+
+            string recentMismatchJson = null;
+
+            if (verbose)
+                Console.WriteLine("Using recent reservations mismatches JSON from file: " + RecentMismatchesPath);
+
+            if (File.Exists(RecentMismatchesPath))
+                recentMismatchJson = File.ReadAllText(RecentMismatchesPath);
+
+            if (String.IsNullOrEmpty(recentMismatchJson))
+                recentMismatchJson = "[]";
+
+            var recentMismatchEntries = JsonConvert.DeserializeObject<List<RecentlyNotifiedReservationMismatchEntry>>(recentMismatchJson);
+
+            // Write to console.
+
+            Console.WriteLine("Recently notified unknown hosts:");
+
+            Console.WriteLine("Notified At\tIP Address\tMAC Address\tManufacturer");
+
+            foreach (var recentHostEntry in recentHostEntries)
+                Console.WriteLine(" {0}\t{1}\t{2}\t{3}", recentHostEntry.NotifiedAt, recentHostEntry.UnknownHost.IpAddress, recentHostEntry.UnknownHost.MacAddress, recentHostEntry.UnknownHost.Manufacturer);
+
+            Console.WriteLine("  ({0} entries)", recentHostEntries.Count);
+
+            Console.WriteLine("Recently notified DHCP reservation mismatches:");
+
+            Console.WriteLine("Notified At\tActual IP\tActual MAC\tExpected MAC");
+
+            foreach (var recentMismatchEntry in recentMismatchEntries)
+                Console.WriteLine(" {0}\t{1}\t{2}\t{3}",
+                    recentMismatchEntry.NotifiedAt,
+                    recentMismatchEntry.MismatchEntry.Key.IpAddress,
+                    recentMismatchEntry.MismatchEntry.Key.MacAddress,
+                    recentMismatchEntry.MismatchEntry.Value.MacAddress);
+
+            Console.WriteLine("  ({0} entries)", recentMismatchEntries.Count);
         }
     }
 }
